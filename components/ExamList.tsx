@@ -1,44 +1,30 @@
 'use client'
-import { useState } from 'react'
 import Link from 'next/link'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
 import { useWebSocket } from './WebSocketProvider'
+import { cn } from '@/lib/utils'
 
-export function ExamList() {
-  const [isOpen, setIsOpen] = useState(false)
+export function ExamList({ currentExamId }: { currentExamId?: string }) {
   const { examData } = useWebSocket()
   const exams = Object.keys(examData)
 
+  // Add some hard-coded exams
+  const allExams = [...exams, 'exam-1', 'exam-2', 'exam-3']
+
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="w-[200px] space-y-2 fixed left-0 top-0 h-full bg-gray-100"
-    >
-      <div className="flex items-center justify-between space-x-4 px-4 py-2">
-        <h2 className="text-2xl font-semibold">Exams</h2>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "transform rotate-180" : ""}`} />
-            <span className="sr-only">Toggle</span>
-          </Button>
-        </CollapsibleTrigger>
-      </div>
-      <CollapsibleContent className="space-y-2">
-        {exams.map((examId) => (
+    <div className="w-[200px] fixed left-0 top-0 h-full bg-gray-100 p-4 overflow-y-auto">
+      <h2 className="text-2xl font-semibold mb-4">Exams</h2>
+      <div className="space-y-2">
+        {allExams.map((examId) => (
           <Link key={examId} href={`/exam/${examId}`}>
-            <div className="rounded-md border px-4 py-2 hover:bg-gray-200 cursor-pointer">
+            <div className={cn(
+              "rounded-md border px-4 py-2 hover:bg-gray-200 cursor-pointer",
+              currentExamId === examId && "bg-blue-200 hover:bg-blue-300"
+            )}>
               <h3 className="text-lg font-medium">Exam {examId}</h3>
             </div>
           </Link>
         ))}
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+    </div>
   )
 }

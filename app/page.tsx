@@ -1,6 +1,6 @@
-import { ExamButton } from '@/components/ExamButton'
-import { ExamList } from '@/components/ExamList'
-import { WebSocketProvider } from '@/components/WebSocketProvider'
+import { ExamButton } from '../components/ExamButton'
+import { ExamList } from '../components/ExamList'
+import { WebSocketProvider } from '../components/WebSocketProvider'
 
 export default function Home() {
   return (
