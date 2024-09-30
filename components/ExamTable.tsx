@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 import React, { useState, useEffect } from 'react'
 import {
@@ -34,14 +35,10 @@ const hardCodedData = [
 ]
 
 export default function ExamTable({ examId }: { examId: string }) {
-  const [highlightedRows, setHighlightedRows] = useState<{ [key: string]: 'short' | 'long' | null }>({})
+  const [highlightedRows, setHighlightedRows] = useState<{ [key: string]: 'yellow' | 'red' | null }>({})
 
   const formatTime = (time: number) => {
     return new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const formatDuration = (duration: number) => {
-    return `${duration / 1000} seconds`
   }
 
   const getStatusBadge = (status: string) => {
@@ -63,14 +60,18 @@ export default function ExamTable({ examId }: { examId: string }) {
       const newHighlightedRows = { ...highlightedRows }
 
       hardCodedData.forEach(student => {
-        const lastFocusLost = student.focusLostDurations[student.focusLostDurations.length - 1]
-        if (lastFocusLost) {
-          const timeSinceFocusLost = now - (lastFocusLost.startTime + lastFocusLost.duration)
-          if (timeSinceFocusLost <= 5000) {
-            newHighlightedRows[student.studentId] = lastFocusLost.duration <= 5000 ? 'short' : 'long'
-          } else {
-            newHighlightedRows[student.studentId] = null
-          }
+        const recentFocusLoss = student.focusLostDurations.find(loss => 
+          now - (loss.startTime + loss.duration) <= 5000 && loss.duration <= 5000
+        )
+
+        const longFocusLoss = student.focusLostDurations.some(loss => loss.duration > 5000)
+
+        if (longFocusLoss) {
+          newHighlightedRows[student.studentId] = 'red'
+        } else if (recentFocusLoss) {
+          newHighlightedRows[student.studentId] = 'yellow'
+        } else {
+          newHighlightedRows[student.studentId] = null
         }
       })
 
@@ -100,8 +101,8 @@ export default function ExamTable({ examId }: { examId: string }) {
           <TableRow 
             key={index}
             className={cn(
-              highlightedRows[student.studentId] === 'short' && "bg-yellow-100",
-              highlightedRows[student.studentId] === 'long' && "bg-red-100"
+              highlightedRows[student.studentId] === 'yellow' && "bg-yellow-100",
+              highlightedRows[student.studentId] === 'red' && "bg-red-100"
             )}
           >
             <TableCell>{student.studentId}</TableCell>
@@ -117,9 +118,9 @@ export default function ExamTable({ examId }: { examId: string }) {
               ))}
             </TableCell>
             <TableCell>
-              {student.focusLostDurations.map((focusLost, idx) => (
+              {student.focusLostDurations.map((loss, idx) => (
                 <div key={idx}>
-                  {formatTime(focusLost.startTime)}: {formatDuration(focusLost.duration)}
+                  {formatTime(loss.startTime)}: {loss.duration / 1000}s
                 </div>
               ))}
             </TableCell>

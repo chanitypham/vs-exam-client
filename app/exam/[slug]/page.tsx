@@ -1,5 +1,4 @@
 'use client'
-import { useWebSocket } from '@/components/WebSocketProvider'
 import ExamTable from '@/components/ExamTable'
 import { ExamList } from '@/components/ExamList'
 

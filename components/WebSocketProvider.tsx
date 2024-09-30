@@ -11,7 +11,7 @@ type ExamData = {
       time: number
       questionNb: number
       passedTestCases: number
-      failedTestCases: any[]
+      failedTestCases: number
     }>
     focusLostTime: number[]
     breakRqTime: Array<{
