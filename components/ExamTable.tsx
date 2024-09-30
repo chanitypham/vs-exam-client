@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const hardCodedData = [
   {
@@ -20,19 +21,64 @@ const hardCodedData = [
       { time: 1621235567890, questionNb: 1, passedTestCases: 3 },
       { time: 1621236567890, questionNb: 2, passedTestCases: 2 },
     ],
-    focusLostTime: [1621235067890, 1621236067890],
+    focusLostDurations: [
+      { startTime: 1621235067890, duration: 3000 },  // 3 seconds
+      { startTime: 1621236067890, duration: 7000 },  // 7 seconds
+    ],
     breakRqTime: [
       { breakRqTime: 1621236567890, reason: "Bathroom break" }
     ],
-    finalSubmission: ["Q1.py", "Q2.py"]
+    finalSubmission: ["Q1.py", "Q2.py"],
+    status: "in exam" // Can be "not started", "in exam", or "submitted"
   },
-  // Add more hard-coded student data as needed
 ]
 
 export default function ExamTable({ examId }: { examId: string }) {
+  const [highlightedRows, setHighlightedRows] = useState<{ [key: string]: 'short' | 'long' | null }>({})
+
   const formatTime = (time: number) => {
     return new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
+
+  const formatDuration = (duration: number) => {
+    return `${duration / 1000} seconds`
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "not started":
+        return <Badge variant="secondary">Not Started</Badge>
+      case "in exam":
+        return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">In Exam</Badge>
+      case "submitted":
+        return <Badge variant="outline" className="text-green-600 border-green-600">Submitted</Badge>
+      default:
+        return null
+    }
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now()
+      const newHighlightedRows = { ...highlightedRows }
+
+      hardCodedData.forEach(student => {
+        const lastFocusLost = student.focusLostDurations[student.focusLostDurations.length - 1]
+        if (lastFocusLost) {
+          const timeSinceFocusLost = now - (lastFocusLost.startTime + lastFocusLost.duration)
+          if (timeSinceFocusLost <= 5000) {
+            newHighlightedRows[student.studentId] = lastFocusLost.duration <= 5000 ? 'short' : 'long'
+          } else {
+            newHighlightedRows[student.studentId] = null
+          }
+        }
+      })
+
+      setHighlightedRows(newHighlightedRows)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [highlightedRows])
 
   return (
     <Table>
@@ -40,19 +86,27 @@ export default function ExamTable({ examId }: { examId: string }) {
         <TableRow>
           <TableHead>Student ID</TableHead>
           <TableHead>Name</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>Joined Time</TableHead>
           <TableHead>Submit Time</TableHead>
           <TableHead>Gradings</TableHead>
-          <TableHead>Focus Lost Times</TableHead>
+          <TableHead>Focus Lost Durations</TableHead>
           <TableHead>Break Requests</TableHead>
           <TableHead>Final Submission</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {hardCodedData.map((student, index) => (
-          <TableRow key={index}>
+          <TableRow 
+            key={index}
+            className={cn(
+              highlightedRows[student.studentId] === 'short' && "bg-yellow-100",
+              highlightedRows[student.studentId] === 'long' && "bg-red-100"
+            )}
+          >
             <TableCell>{student.studentId}</TableCell>
             <TableCell>{student.name}</TableCell>
+            <TableCell>{getStatusBadge(student.status)}</TableCell>
             <TableCell>{formatTime(student.joinedTime)}</TableCell>
             <TableCell>{formatTime(student.submitTime)}</TableCell>
             <TableCell>
@@ -63,8 +117,10 @@ export default function ExamTable({ examId }: { examId: string }) {
               ))}
             </TableCell>
             <TableCell>
-              {student.focusLostTime.map((time, idx) => (
-                <div key={idx}>{formatTime(time)}</div>
+              {student.focusLostDurations.map((focusLost, idx) => (
+                <div key={idx}>
+                  {formatTime(focusLost.startTime)}: {formatDuration(focusLost.duration)}
+                </div>
               ))}
             </TableCell>
             <TableCell>
