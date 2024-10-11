@@ -14,24 +14,58 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useWebSocket } from './WebSocketProvider'
 
+const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
+
 export function ExamButton() {
   const [examName, setExamName] = useState('')
-  const [examDate, setExamDate] = useState('')
+  const [examStartTime, setExamStartTime] = useState('')
+  const [duration, setDuration] = useState('')
   const [uniId, setUniId] = useState('')
   const [courseId, setCourseId] = useState('')
   const [examId, setExamId] = useState('')
+  const [password, setPassword] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const { addExam } = useWebSocket()
 
-  const handleSubmit = () => {
-    if (examName && examDate && uniId && courseId && examId) {
-      addExam(uniId, courseId, examId, examName, examDate)
-      setExamName('')
-      setExamDate('')
-      setUniId('')
-      setCourseId('')
-      setExamId('')
-      setIsOpen(false)
+  const handleSubmit = async () => {
+    if (examName && examStartTime && duration && uniId && courseId && examId && password) {
+      const startTime = new Date(examStartTime).getTime()
+      const durationMinutes = parseInt(duration)
+
+      try {
+        const response = await fetch(`${BASE_URL}/exam`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uniId,
+            courseId,
+            examId,
+            examName,
+            examStartTime: startTime,
+            duration: durationMinutes,
+            password,
+          }),
+        })
+
+        if (response.ok) {
+          addExam(uniId, courseId, examId, examName, startTime, durationMinutes, password)
+          setIsOpen(false)
+          // Reset form fields
+          setExamName('')
+          setExamStartTime('')
+          setDuration('')
+          setUniId('')
+          setCourseId('')
+          setExamId('')
+          setPassword('')
+        } else {
+          console.error('Failed to create exam')
+        }
+      } catch (error) {
+        console.error('Error creating exam:', error)
+      }
     }
   }
 
@@ -93,15 +127,39 @@ export function ExamButton() {
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">
-              Date
+            <Label htmlFor="startTime" className="text-right">
+              Start Time
             </Label>
             <Input 
-              id="date" 
-              type="date" 
+              id="startTime" 
+              type="datetime-local" 
               className="col-span-3" 
-              value={examDate}
-              onChange={(e) => setExamDate(e.target.value)}
+              value={examStartTime}
+              onChange={(e) => setExamStartTime(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="duration" className="text-right">
+              Duration (minutes)
+            </Label>
+            <Input 
+              id="duration" 
+              type="number" 
+              className="col-span-3" 
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="password" className="text-right">
+              Password
+            </Label>
+            <Input 
+              id="password" 
+              type="password" 
+              className="col-span-3" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
         </div>

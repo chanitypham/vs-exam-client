@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client'
 import React, { useState, useEffect } from 'react'
 import {
@@ -11,30 +10,12 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useWebSocket } from './WebSocketProvider'
 
-const hardCodedData = [
-  {
-    studentId: "S001",
-    name: "John Doe",
-    joinedTime: 1621234567890,
-    submitTime: 1621238167890,
-    gradings: [
-      { time: 1621235567890, questionNb: 1, passedTestCases: 3 },
-      { time: 1621236567890, questionNb: 2, passedTestCases: 2 },
-    ],
-    focusLostDurations: [
-      { startTime: 1621235067890, duration: 3000 },  // 3 seconds
-      { startTime: 1621236067890, duration: 7000 },  // 7 seconds
-    ],
-    breakRqTime: [
-      { breakRqTime: 1621236567890, reason: "Bathroom break" }
-    ],
-    finalSubmission: ["Q1.py", "Q2.py"],
-    status: "in exam" // Can be "not started", "in exam", or "submitted"
-  },
-]
+// const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
 export default function ExamTable({ examId }: { examId: string }) {
+  const { examData } = useWebSocket()
   const [highlightedRows, setHighlightedRows] = useState<{ [key: string]: 'yellow' | 'red' | null }>({})
 
   const formatTime = (time: number) => {
@@ -59,12 +40,14 @@ export default function ExamTable({ examId }: { examId: string }) {
       const now = Date.now()
       const newHighlightedRows = { ...highlightedRows }
 
-      hardCodedData.forEach(student => {
-        const recentFocusLoss = student.focusLostDurations.find(loss => 
-          now - (loss.startTime + loss.duration) <= 5000 && loss.duration <= 5000
+      examData[examId]?.forEach(student => {
+        const recentFocusLoss = student.focusLostTime.find(lossTime => 
+          now - lossTime <= 5000
         )
 
-        const longFocusLoss = student.focusLostDurations.some(loss => loss.duration > 5000)
+        const longFocusLoss = student.focusLostTime.some(lossTime => 
+          now - lossTime > 5000
+        )
 
         if (longFocusLoss) {
           newHighlightedRows[student.studentId] = 'red'
@@ -79,7 +62,11 @@ export default function ExamTable({ examId }: { examId: string }) {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [highlightedRows])
+  }, [examData, examId, highlightedRows])
+
+  if (!examData[examId]) {
+    return <div>No data available for this exam.</div>
+  }
 
   return (
     <Table>
@@ -91,13 +78,13 @@ export default function ExamTable({ examId }: { examId: string }) {
           <TableHead>Joined Time</TableHead>
           <TableHead>Submit Time</TableHead>
           <TableHead>Gradings</TableHead>
-          <TableHead>Focus Lost Durations</TableHead>
+          <TableHead>Focus Lost Times</TableHead>
           <TableHead>Break Requests</TableHead>
           <TableHead>Final Submission</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {hardCodedData.map((student, index) => (
+        {examData[examId].map((student, index) => (
           <TableRow 
             key={index}
             className={cn(
@@ -107,9 +94,9 @@ export default function ExamTable({ examId }: { examId: string }) {
           >
             <TableCell>{student.studentId}</TableCell>
             <TableCell>{student.name}</TableCell>
-            <TableCell>{getStatusBadge(student.status)}</TableCell>
+            <TableCell>{getStatusBadge(student.submitTime ? "submitted" : "in exam")}</TableCell>
             <TableCell>{formatTime(student.joinedTime)}</TableCell>
-            <TableCell>{formatTime(student.submitTime)}</TableCell>
+            <TableCell>{student.submitTime ? formatTime(student.submitTime) : "Not submitted"}</TableCell>
             <TableCell>
               {student.gradings.map((grading, idx) => (
                 <div key={idx}>
@@ -118,9 +105,9 @@ export default function ExamTable({ examId }: { examId: string }) {
               ))}
             </TableCell>
             <TableCell>
-              {student.focusLostDurations.map((loss, idx) => (
+              {student.focusLostTime.map((lossTime, idx) => (
                 <div key={idx}>
-                  {formatTime(loss.startTime)}: {loss.duration / 1000}s
+                  {formatTime(lossTime)}
                 </div>
               ))}
             </TableCell>

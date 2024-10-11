@@ -1,6 +1,8 @@
 'use client'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
+const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
+
 type ExamData = {
   [examId: string]: {
     studentId: string
@@ -11,13 +13,14 @@ type ExamData = {
       time: number
       questionNb: number
       passedTestCases: number
-      failedTestCases: number
+      failedTestCases: Array<{
+        testCaseIndex: number
+        expectedOutput: string
+        studentOutput: string
+      }>
     }>
     focusLostTime: number[]
     breakRqTime: Array<{
-      uniId: string
-      courseId: string
-      examId: string
       breakRqTime: number
       reason: string
     }>
@@ -27,7 +30,7 @@ type ExamData = {
 
 type WebSocketContextType = {
   examData: ExamData
-  addExam: (uniId: string, courseId: string, examId: string, name: string, date: string) => void
+  addExam: (uniId: string, courseId: string, examId: string, examName: string, examStartTime: number, duration: number, password: string) => void
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({
@@ -40,7 +43,7 @@ export const WebSocketProvider: React.FC<{children: React.ReactNode}> = ({ child
   const [socket, setSocket] = useState<WebSocket | null>(null)
 
   useEffect(() => {
-    const ws = new WebSocket('ws://cloud.strixthekiet.me:8000/ws')
+    const ws = new WebSocket(`${BASE_URL}/monitor`)
     setSocket(ws)
 
     ws.onmessage = (event) => {
@@ -57,14 +60,14 @@ export const WebSocketProvider: React.FC<{children: React.ReactNode}> = ({ child
     }
   }, [])
 
-  const addExam = (uniId: string, courseId: string, examId: string, name: string, date: string) => {
-    const fullExamId = `${uniId}${courseId}${examId}`
+  const addExam = (uniId: string, courseId: string, examId: string, examName: string, examStartTime: number, duration: number, password: string) => {
+    const fullExamId = `${uniId}-${courseId}-${examId}`
     setExamData(prevData => ({
       ...prevData,
       [fullExamId]: []
     }))
     if (socket) {
-      socket.send(JSON.stringify({ type: 'addExam', uniId, courseId, examId, name, date }))
+      socket.send(JSON.stringify({ type: 'addExam', uniId, courseId, examId, examName, examStartTime, duration, password }))
     }
   }
 

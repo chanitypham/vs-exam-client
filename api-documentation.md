@@ -2,12 +2,14 @@ openapi: 3.0.0
 servers:
   # Added by API Auto Mocking Plugin
   - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/strixthekiet/VsExam/0.2.2
+    url: https://virtserver.swaggerhub.com/strixthekiet/VsExam/0.2.3
   - description: Strix Cloud
     url: http://cloud.strixthekiet.me:8000/
+  - description: WS on Strixcloud
+    url: ws://cloud.strixthekiet.me:8000/
 info:
   description: An extension to hold exam
-  version: "0.2.2"
+  version: "0.2.3"
   title: VSExam API
   license:
     name: Apache 2.0
@@ -23,37 +25,23 @@ paths:
       tags:
         - teacher
       summary: create new exam
-      description: Adds a scheduled exam to the database
-      responses:
-        '201':
-          description: exam created
-        '400':
-          description: 'invalid input, object invalid'
-        '409':
-          description: an existing exam with same uniID, courseID and examID already exists
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Exam'
-        description: Exam information to create
-    get:
-      tags:
-        - teacher
-      summary: Get exams information
-      description: Get a list of exam in a university's course
+      description: Adds a scheduled exam to the database, authorized with email and token
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: A list of exams in the course
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ExamSummary'
+          description: Exam created successfully
+        '400':
+          description: 'invalid input, object invalid'
+        '401':
+          description: 'User is not authorized to create exam'
+        '409':
+          description: 'ExamID must be unique'
+        '500':
+          description: 'Internal server error'
       parameters:
         - in: query
-          name: uniId
+          name: uniID
           required: true
           schema:
             type: string
@@ -64,13 +52,123 @@ paths:
           required: true
           schema:
             type: string
-            example: COMP3010
+            example: COMP2030
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+            example: hoang.vnh@vinuni.edu.vn
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Exam'
+        description: Exam information to create
+    get:
+      tags:
+        - teacher
+      summary: Get exams information
+      description: Get a list of exam in a university's course
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of exams in the course
+          content:
+            multipart/form-data:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - examID
+                    - examName
+                    - examStartTime
+                    - duration
+                    - password
+                  properties:
+                    examID:
+                      type: string
+                      format: assignment_name-order
+                      example: midterm-1
+                    examName:
+                      type: string
+                      example: Midterm 1
+                    exam_start_time:
+                      type: integer
+                      format: Unix time
+                      example: 1726505500000
+                    duration:
+                      type: integer
+                      format: minutes
+                      example: 60
+                    password:
+                      type: string
+                      example: secret
+                    question:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TestCase'
+                    material:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          fileName:
+                            type: string
+                            example: instructions.pdf
+                          materialContent:
+                            type: string
+                            format: binary
+      parameters:
+        - in: query
+          name: uniID
+          required: true
+          schema:
+            type: string
+            format: lowercase
+            example: vinuni
+        - in: query
+          name: courseID
+          required: true
+          schema:
+            type: string
+            example: COMP2030
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+            example: hoang.vnh@vinuni.edu.vn
   /exam/join-rq:
     post:
       tags:
         - student
       summary: Join an existing exam
       description: Allows a student to join an existing exam
+      parameters:
+        - in: query
+          name: studentID
+          required: true
+          schema:
+            type: string
+            example: V202200679
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                examID:
+                  type: string
+                  format: given by professor
+                  example: vinuni-COMP2030-midterm-1
+                password:
+                  type: string
+                  example: secret
       responses:
         '200':
           description: Student joined the exam successfully
@@ -81,7 +179,7 @@ paths:
                 properties:
                   profName:
                     type: string
-                    example: Pham Huy Hieu
+                    example: Van Nguyen Hung Hoang
                   examStartTime:
                     type: integer
                     format: Unix time
@@ -93,65 +191,46 @@ paths:
                   material:
                     type: array
                     items:
-                      type: string
-                      format: pdf, docx, txt,...
-                      example: instructions.pdf
+                      type: object
+                      properties:
+                        fileName:
+                          type: string
+                          example: instructions.pdf
+                        materialContent:
+                          type: string
+                          format: binary
         '400':
           description: 'invalid input, object invalid'
         '401':
           description: Student is not authorized to join the exam (e.g., missing credentials, not enrolled)
         '404':
           description: Exam not found
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                uniId:
-                  type: string
-                  format: lowercase
-                  example: vinuni
-                courseID:
-                  type: string
-                  example: COMP3010
-                examID:
-                  type: string
-                  format: assignment_name-order
-                  example: midterm-1
-                studentID:
-                  type: string
-                  example: V202200679
-                password:
-                  type: string
-                  example: secret
-        description: Necessary information to join exam
+
   /exam/submission:
     post:
       tags:
         - student
       summary: Submit a joined exam
       description: Allows a student to submit their completed exam
+      parameters:
+        - in: query
+          name: examID
+          required: true
+          schema:
+            type: string
+            format: given by professor
+        - in: query
+          name: studentID
+          required: true
+          schema:
+            type: string
+            example: V202200679
       requestBody:
         content:
-          multipart/form-data:  # Use multipart/form-data for file upload
+          multipart/form-data:
             schema:
               type: object
               properties:
-                uniId:
-                  type: string
-                  format: lowercase
-                  example: vinuni
-                courseID:
-                  type: string
-                  example: COMP3010
-                examID:
-                  type: string
-                  format: assignment_name-order
-                  example: midterm-1
-                studentId:
-                  type: string
-                  description: The ID of the student submitting the exam
                 submission: 
                   type: string
                   format: binary
@@ -172,6 +251,18 @@ paths:
       summary: Request grading for a question
       description: Allow grading for a question, receives how many test cases pass
       parameters:
+        - in: query
+          name: examID
+          schema:
+            type: string
+            format: given by professor
+          required: true
+        - in: query
+          name: studentID
+          required: true
+          schema:
+            type: string
+            example: V202200679
         - in: path
           name: question-nb
           schema:
@@ -180,34 +271,17 @@ paths:
           description: Numeric ID of the user to get
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              required:
-                - studentId
-                - questionNumber
               properties:
-                uniId:
+                code:
                   type: string
-                  format: lowercase
-                  example: vinuni
-                courseID:
-                  type: string
-                  example: COMP3010
-                examID:
-                  type: string
-                  format: assignment_name-order
-                  example: midterm-1
-                studentID:
-                  type: string
-                  example: V202200679
-                questionNumber:
-                  type: integer
-                  description: The index (1-based) of the question within the exam that the student wants graded.
+                  format: binary
+                  description: The student's code file (e.g., Python, Java)
       responses:
         '200':
           description: Grading request received successfully.
-      
           content:
             application/json:
               schema:
@@ -216,13 +290,13 @@ paths:
                   passedTestCases:
                     type: integer
                     description: The number of test cases the student's code passed for the requested question.
-                  failedTestCases:  # Optional property decided by the server
+                  failedTestCases:
                     type: array
                     description: (Optional) An array of objects containing details about failed test cases (if the server decides to include this information).
                     items:
                       type: object
                       properties:
-                        testCaseIndex:  # 1-based index of the failed test case
+                        testCaseIndex:
                           type: integer
                           description: The index of the failed test case within the question.
                         expectedOutput:
@@ -243,26 +317,26 @@ paths:
         - student
       summary: Request a break during exam
       description: Allows a student to send a request to pause the exam
+      parameters:
+        - in: query
+          name: examID
+          required: true
+          schema:
+            type: string
+            format: given by professor
+            example: vinuni-COMP2030-midterm-1
+        - in: query
+          name: studentID
+          required: true
+          schema:
+            type: string
+            example: V202200679
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                uniId:
-                  type: string
-                  format: lowercase
-                  example: vinuni
-                courseID:
-                  type: string
-                  example: COMP3010
-                examID:
-                  type: string
-                  format: assignment_name-order
-                  example: midterm-1
-                studentID:
-                  type: string
-                  example: V202200679
                 reason:
                   type: string
                   description: (Optional) Reason for requesting the break
@@ -289,26 +363,26 @@ paths:
         - student
       summary: Notify server of lost exam window focus
       description: Informs the server that the student has clicked outside of the VS Code exam window
+      parameters:
+        - in: query
+          name: examID
+          required: true
+          schema:
+            type: string
+            format: given by professor
+            example: vinuni-COMP2030-midterm-1
+        - in: query
+          name: studentID
+          required: true
+          schema:
+            type: string
+            example: V202200679
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                uniId:
-                  type: string
-                  format: lowercase
-                  example: vinuni
-                courseID:
-                  type: string
-                  example: COMP3010
-                examID:
-                  type: string
-                  format: assignment_name-order
-                  example: midterm-1
-                studentID:
-                  type: string
-                  example: V202200679
                 activeStatus:
                   type: boolean
                   description: Whether the window of VsCode is active
@@ -316,7 +390,7 @@ paths:
                   type: boolean
                   description: Whether the window of VsCode is in focus
       responses:
-        '200':  # Consider using a more informative success code (e.g., 204 No Content)
+        '200': 
           description: Lost focus notification received
         '400':
           description: 'invalid input, object invalid'
@@ -324,35 +398,129 @@ paths:
           description: Student is not authorized (e.g., missing credentials, not in exam)
         '404':
           description: Exam not found
-        
+  /monitor:
+    get:
+      tags:
+        - teacher
+      summary: .***WebSocket, not GET*** - Monitor students during exam
+      description: Allows a teacher to monitor students during an exam
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: examID
+          required: true
+          schema:
+            type: string
+            format: given by professor
+            example: vinuni-COMP2030-midterm-1
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+            example: hoang.vnh@vinuni.edu.vn
+      responses:
+        '200':
+          description: WebSocket connection established, a stream of student data will be sent when student has an update. Only some updated information will be sent
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - studentId
+                properties:
+                  studentId:
+                    type: string
+                    example: V202200679
+                  joinedTime:
+                    type: integer
+                    format: Unix time
+                    example: 1609459200
+                  submitTime:
+                    type: integer
+                    example: 1609459200
+                  gradings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        time:
+                          type: integer
+                          example: 123
+                        questionNb:
+                          type: integer
+                          example: 1
+                        passedTestCases:
+                          type: integer
+                          example: 1
+                        failedTestCases:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              testCaseIndex:
+                                type: integer
+                                example: 1
+                              expectedOutput:
+                                type: string
+                                example: "expected output"
+                              studentOutput:
+                                type: string
+                                example: "student output"
+                  focusLostTime:
+                    type: array
+                    items:
+                      type: integer
+                      example: 1232
+                  breakRqTime:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        breakRqTime:
+                          type: integer
+                          example: 1233
+                        reason:
+                          type: string
+                          example: "pee"
+                  finalSubmission:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
+                      example: "Q1.py"
+        '400':
+          description: 'invalid input, object invalid'
+        '401':
+          description: Teacher is not authorized to monitor the exam (e.g., missing credentials, not the exam creator)
+        '404':
+          description: Exam not found
       
 components:
+  securitySchemes:
+    bearerAuth: 
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Exam:
       type: object
       required:
-        - uniId
-        - courseID
         - examID
         - examName
         - examStartTime
         - duration
         - password
       properties:
-        uniId:
-          type: string
-          format: lowercase
-          example: vinuni
-        courseId:
-          type: string
-          example: COMP3010
-        examId:
+        examID:
           type: string
           format: assignment_name-order
           example: midterm-1
-        profName:
+        examName:
           type: string
-          example: Pham Huy Hieu
+          example: Midterm 1
         exam_start_time:
           type: integer
           format: Unix time
@@ -371,9 +539,10 @@ components:
         material:
           type: array
           items:
-            type: string
-            format: pdf, docx, txt,...
-            example: instructions.pdf
+            type: array
+            items:
+              type: string
+              format: binary
     TestCase:
       type: object
       required:
@@ -384,30 +553,3 @@ components:
           description: input of the question
         output:
           description: intended output of the question
-    ExamSummary:
-      type: object
-      properties:
-        examID:
-          type: string
-          format: assignment_name-order
-          description: The exam ID (e.g., midterm-1)
-        examName:
-          type: string
-          description: The name of the exam
-        prof_name:
-          type: string
-          description: The professor's name (optional)
-        examStartTime:
-          type: integer
-          format: Unix time
-          description: The start time of the exam in Unix timestamp
-        duration:
-          type: integer
-          format: minutes
-          description: The duration of the exam in minutes
-        material:
-          type: array
-          items:
-            type: string
-            format: pdf, docx, txt,...
-          description: A list of material URLs (optional)
