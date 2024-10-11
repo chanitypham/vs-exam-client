@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useWebSocket } from './WebSocketProvider'
 
-const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
+// const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
 export default function ExamTable({ examId }: { examId: string }) {
   const { examData } = useWebSocket()
