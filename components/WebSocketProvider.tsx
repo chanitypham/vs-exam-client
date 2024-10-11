@@ -43,7 +43,7 @@ export const WebSocketProvider: React.FC<{children: React.ReactNode}> = ({ child
   const [socket, setSocket] = useState<WebSocket | null>(null)
 
   useEffect(() => {
-    const ws = new WebSocket(`${BASE_URL}/monitor`)
+    const ws = new WebSocket(`wss://${BASE_URL.replace(/^https?:\/\//, '')}/monitor`)
     setSocket(ws)
 
     ws.onmessage = (event) => {
