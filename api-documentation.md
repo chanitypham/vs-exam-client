@@ -4,9 +4,9 @@ servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/strixthekiet/VsExam/0.2.3
   - description: Strix Cloud
-    url: http://cloud.strixthekiet.me:8000/
+    url: https://vsexam.cloud.strixthekiet.me/
   - description: WS on Strixcloud
-    url: ws://cloud.strixthekiet.me:8000/
+    url: ws://vsexam.cloud.strixthekiet.me/
 info:
   description: An extension to hold exam
   version: "0.2.3"
@@ -20,7 +20,154 @@ tags:
   - name: teacher
     description: create exam and monitor
 paths:
+  /exams:
+    get:
+      tags:
+        - teacher
+      summary: Get exams information
+      description: Get a list of exams made by professor
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of exams made by professor
+          content:
+            multipart/form-data:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - examID
+                    - examName
+                    - examStartTime
+                    - duration
+                    - password
+                  properties:
+                    courseName:
+                      type: string
+                      example: Software Construction
+                    examID:
+                      type: string
+                      format: assignment_name-order
+                      example: midterm-1
+                    examName:
+                      type: string
+                      example: Midterm 1
+                    examStartTime:
+                      type: integer
+                      format: Unix time
+                      example: 1726505500000
+                    duration:
+                      type: integer
+                      format: minutes
+                      example: 60
+                    password:
+                      type: string
+                      example: secret
+                    testCases:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TestCase'
+                    material:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          fileName:
+                            type: string
+                            example: instructions.pdf
+                          materialContent:
+                            type: string
+                            format: binary
+      parameters:
+        - in: query
+          name: uniID
+          required: true
+          schema:
+            type: string
+            format: lowercase
+            example: vinuni
+        - in: query
+          name: profID
+          required: true
+          schema:
+            type: string
+            example: COMP2030
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+            example: hoang.vnh@vinuni.edu.vn
+
   /exam:
+    get:
+      tags:
+        - teacher
+      summary: Get exam information of prepared or finished exam
+      description: Get information of a specific exam, prepared or finished
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Exam information
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                required:
+                  - examID
+                  - examName
+                  - examStartTime
+                  - duration
+                  - password
+                properties:
+                  courseName:
+                    type: string
+                    example: Software Construction
+                  examID:
+                    type: string
+                    format: assignment_name-order
+                    example: midterm-1
+                  examName:
+                    type: string
+                    example: Midterm 1
+                  examStartTime:
+                    type: integer
+                    format: Unix time
+                    example: 1726505500000
+                  duration:
+                    type: integer
+                    format: minutes
+                    example: 60
+                  password:
+                    type: string
+                    example: secret
+                  testCases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestCase'
+                  material:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fileName:
+                          type: string
+                          example: instructions.pdf
+                        materialContent:
+                          type: string
+                          format: binary
+      parameters:
+        - in: query
+          name: examID
+          required: true
+          schema:
+            type: string
+            format: given when made
+            example: vinuni-COMP2030-midterm-1
     post:
       tags:
         - teacher
@@ -66,83 +213,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Exam'
         description: Exam information to create
-    get:
-      tags:
-        - teacher
-      summary: Get exams information
-      description: Get a list of exam in a university's course
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: A list of exams in the course
-          content:
-            multipart/form-data:
-              schema:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - examID
-                    - examName
-                    - examStartTime
-                    - duration
-                    - password
-                  properties:
-                    examID:
-                      type: string
-                      format: assignment_name-order
-                      example: midterm-1
-                    examName:
-                      type: string
-                      example: Midterm 1
-                    exam_start_time:
-                      type: integer
-                      format: Unix time
-                      example: 1726505500000
-                    duration:
-                      type: integer
-                      format: minutes
-                      example: 60
-                    password:
-                      type: string
-                      example: secret
-                    question:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/TestCase'
-                    material:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          fileName:
-                            type: string
-                            example: instructions.pdf
-                          materialContent:
-                            type: string
-                            format: binary
-      parameters:
-        - in: query
-          name: uniID
-          required: true
-          schema:
-            type: string
-            format: lowercase
-            example: vinuni
-        - in: query
-          name: courseID
-          required: true
-          schema:
-            type: string
-            example: COMP2030
-        - in: query
-          name: email
-          required: true
-          schema:
-            type: string
-            format: email
-            example: hoang.vnh@vinuni.edu.vn
+
   /exam/join-rq:
     post:
       tags:
@@ -177,6 +248,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  courseName:
+                    type: string
+                    example: COMP2030
                   profName:
                     type: string
                     example: Van Nguyen Hung Hoang
@@ -227,14 +301,17 @@ paths:
             example: V202200679
       requestBody:
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                submission: 
-                  type: string
-                  format: binary
-                  description: The student's exam submission file (e.g., PDF, DOCX)
+              type: array
+              items:
+                type: object
+                properties:
+                  fileName:
+                    type: string
+                    example: Q1.py
+                  content:
+                    type: string
       responses:
         '200':
           description: Exam submitted successfully
@@ -271,14 +348,15 @@ paths:
           description: Numeric ID of the user to get
       requestBody:
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
-                code:
+                fileName:
                   type: string
-                  format: binary
-                  description: The student's code file (e.g., Python, Java)
+                  example: Q1.py
+                content:
+                  type: string
       responses:
         '200':
           description: Grading request received successfully.
