@@ -4,7 +4,7 @@ servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/strixthekiet/VsExam/0.2.3
   - description: Strix Cloud
-    url: https://vsexam.cloud.strixthekiet.me/
+    url: http://vsexam.cloud.strixthekiet.me/
   - description: WS on Strixcloud
     url: ws://vsexam.cloud.strixthekiet.me/
 info:
@@ -394,7 +394,7 @@ paths:
       tags:
         - student
       summary: Request a break during exam
-      description: Allows a student to send a request to pause the exam
+      description: Allows a student to send a request to pause the exam. Requirems timeout atleast 30 seconds from client
       parameters:
         - in: query
           name: examID
@@ -481,7 +481,7 @@ paths:
       tags:
         - teacher
       summary: .***WebSocket, not GET*** - Monitor students during exam
-      description: Allows a teacher to monitor students during an exam
+      description: Allows a teacher to monitor students during an exam. Add studentId (str) and acceptRq (bool) query when prof press accept for request. Timeout for professor reply is 30 seconds.
       security:
         - bearerAuth: []
       parameters:
@@ -499,6 +499,17 @@ paths:
             type: string
             format: email
             example: hoang.vnh@vinuni.edu.vn
+        - in: query
+          name: studentID
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: acceptRq
+          required: false
+          schema:
+            type: boolean
+          example: true
       responses:
         '200':
           description: WebSocket connection established, a stream of student data will be sent when student has an update. Only some updated information will be sent
