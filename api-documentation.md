@@ -2,14 +2,14 @@ openapi: 3.0.0
 servers:
   # Added by API Auto Mocking Plugin
   - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/strixthekiet/VsExam/0.2.3
+    url: https://virtserver.swaggerhub.com/strixthekiet/VsExam/0.2.4
   - description: Strix Cloud
-    url: http://vsexam.cloud.strixthekiet.me/
+    url: https://vsexam.cloud.strixthekiet.me/
   - description: WS on Strixcloud
     url: ws://vsexam.cloud.strixthekiet.me/
 info:
   description: An extension to hold exam
-  version: "0.2.3"
+  version: 0.2.4
   title: VSExam API
   license:
     name: Apache 2.0
@@ -20,6 +20,68 @@ tags:
   - name: teacher
     description: create exam and monitor
 paths:
+
+  /teacher:
+    post:
+      tags:
+        - teacher
+      summary: Create new teacher
+      description: add new authenticated eacher
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uniID:
+                  type: string
+                  example: vinuni
+                profEmail:
+                  type: string
+                  example: hoang.vnh@vinuni.edu.vn
+                authToken:
+                  type: string
+                  format: SHA256 encryption of profEmail+password
+      responses:
+        '200':
+          description: created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: True
+  /login:
+    post:
+      tags:
+        - teacher
+      summary: login for teacher
+      description: ensure teacher's token are legitimate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profEmail:
+                  type: string
+                  example: hoang.vnh@vinuni.edu.vn
+                authToken:
+                  type: string
+                  format: SHA256 encryption of profEmail+password
+      responses:
+        '200':
+          description: Authentication is successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: True
   /exams:
     get:
       tags:
@@ -89,13 +151,13 @@ paths:
             format: lowercase
             example: vinuni
         - in: query
-          name: profID
+          name: courseID
           required: true
           schema:
             type: string
             example: COMP2030
         - in: query
-          name: email
+          name: profEmail
           required: true
           schema:
             type: string
@@ -201,7 +263,7 @@ paths:
             type: string
             example: COMP2030
         - in: query
-          name: email
+          name: profEmail
           required: true
           schema:
             type: string
@@ -493,7 +555,7 @@ paths:
             format: given by professor
             example: vinuni-COMP2030-midterm-1
         - in: query
-          name: email
+          name: profEmail
           required: true
           schema:
             type: string

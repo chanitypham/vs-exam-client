@@ -12,7 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useWebSocket } from './WebSocketProvider'
+import { sha256 } from 'js-sha256';
+
+const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
 export function ExamButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,25 +26,44 @@ export function ExamButton() {
     password: '',
     courseID: '',
   })
-  const { createExam } = useWebSocket()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setExamInfo(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    createExam(examInfo)
-    setIsOpen(false)
-    setExamInfo({
-      examID: '',
-      examName: '',
-      examStartTime: '',
-      duration: '',
-      password: '',
-      courseID: '',
-    })
+    try {
+      const email = 'hoang.vnh@vinuni.edu.vn'; 
+      const randomNumber = Math.floor(Math.random() * 1000000);
+      const authToken = sha256(email + randomNumber);
+
+      const response = await fetch(`${BASE_URL}/exam`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          uniID: 'vinuni',
+          profEmail: email,
+          ...examInfo,
+        })
+      });
+      if (!response.ok) throw new Error('Failed to create exam');
+      setIsOpen(false)
+      setExamInfo({
+        examID: '',
+        examName: '',
+        examStartTime: '',
+        duration: '',
+        password: '',
+        courseID: '',
+      })
+    } catch (error) {
+      console.error('Error creating exam:', error);
+    }
   }
 
   return (

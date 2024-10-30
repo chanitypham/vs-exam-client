@@ -1,19 +1,68 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ExamList } from '@/components/ExamList'
 import { ExamDetails } from '@/components/ExamDetails'
 import { MonitorExam } from '@/components/MonitorExam'
-import { useWebSocket } from '@/components/WebSocketProvider'
+import { sha256 } from 'js-sha256';
+
+interface Exam {
+  courseName: string;
+  examID: string;
+  examName: string;
+  examStartTime: number;
+  duration: number;
+  password: string;
+  testCases: Array<Array<{ input: string; output: string }>>;
+  material: { fileName: string; materialContent: string }[];
+  attendingStudents: Array<{
+    studentID: string;
+    joinedTime: number;
+    submitTime: number;
+    gradings: any[];
+    focusLostTimes: any[];
+    breakRqTimes: any[];
+    finalSubmission: any[];
+  }>;
+  profName: string;
+  courseID: string;
+  uniID: string;
+  profEmail: string;
+  materials: string[]; 
+}
+
+
+const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
 export default function ExamPage({ params }: { params: { slug: string } }) {
   const examId = params.slug
-  const { examData, monitorExam } = useWebSocket()
+  const [exam, setExam] = useState<Exam | null>(null)
 
   useEffect(() => {
-    monitorExam(examId);
-  }, [examId, monitorExam]);
+    const fetchExamDetails = async () => {
+      try {
+        const email = 'hoang.vnh@vinuni.edu.vn'; // This should be dynamically set based on the logged-in user
+        const randomNumber = Math.floor(Math.random() * 1000000);
+        const authToken = sha256(email + randomNumber);
 
-  const exam = examData[examId];
+        const url = `${BASE_URL}/exam?examID=${examId}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch exam details');
+
+        const examData: Exam = await response.json();
+        setExam(examData);
+      } catch (error) {
+        console.error('Error fetching exam details:', error);
+      }
+    };
+
+    fetchExamDetails();
+  }, [examId]);
 
   return (
     <div className="flex">
@@ -24,7 +73,7 @@ export default function ExamPage({ params }: { params: { slug: string } }) {
           <>
             <ExamDetails exam={exam} />
             <div className="mt-8">
-              <MonitorExam examId={examId} />
+              <MonitorExam exam={exam} />
             </div>
           </>
         ) : (

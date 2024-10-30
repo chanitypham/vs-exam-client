@@ -1,5 +1,6 @@
 'use client'
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { sha256 } from 'js-sha256';
 
 interface ExamData {
   [examId: string]: {
@@ -37,7 +38,6 @@ interface StudentData {
 interface WebSocketContextType {
   examData: ExamData;
   studentData: StudentData;
-  createExam: (examInfo: any) => void;
   monitorExam: (examId: string) => void;
 }
 
@@ -56,19 +56,11 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     ws.onopen = () => {
       console.log('WebSocket connected');
       setIsConnected(true);
-      ws.send(JSON.stringify({ type: 'getExams', uniID: 'vinuni', profID: 'COMP2030', email: 'hoang.vnh@vinuni.edu.vn' }));
     };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'exams') {
-        setExamData(data.exams);
-      } else if (data.type === 'examCreated') {
-        setExamData(prevExams => ({
-          ...prevExams,
-          [data.exam.examID]: data.exam
-        }));
-      } else if (data.type === 'studentUpdate') {
+      if (data.type === 'studentUpdate') {
         setStudentData((prev) => ({ ...prev, [data.studentId]: data }));
       }
     };
@@ -83,26 +75,17 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  const createExam = useCallback((examInfo: any) => {
-    if (socket && isConnected) {
-      socket.send(JSON.stringify({ 
-        type: 'createExam', 
-        uniID: 'vinuni',
-        courseID: examInfo.courseID,
-        email: 'hoang.vnh@vinuni.edu.vn',
-        examInfo 
-      }));
-    } else {
-      console.error('WebSocket is not connected. Unable to create exam.');
-    }
-  }, [socket, isConnected]);
-
   const monitorExam = useCallback((examId: string) => {
     if (socket && isConnected) {
+      const email = 'hoang.vnh@vinuni.edu.vn'; // This should be dynamically set based on the logged-in user
+      const randomNumber = Math.floor(Math.random() * 1000000);
+      const authToken = sha256(email + randomNumber);
+
       socket.send(JSON.stringify({ 
         type: 'monitorExam', 
         examID: examId,
-        email: 'hoang.vnh@vinuni.edu.vn'
+        profEmail: email,
+        authToken: authToken
       }));
     } else {
       console.error('WebSocket is not connected. Unable to monitor exam.');
@@ -110,7 +93,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [socket, isConnected]);
 
   return (
-    <WebSocketContext.Provider value={{ examData, studentData, createExam, monitorExam }}>
+    <WebSocketContext.Provider value={{ examData, studentData, monitorExam }}>
       {children}
     </WebSocketContext.Provider>
   );

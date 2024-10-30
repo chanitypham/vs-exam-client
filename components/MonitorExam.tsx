@@ -1,16 +1,19 @@
-'use client'
-import { useEffect } from 'react'
-import { useWebSocket } from './WebSocketProvider'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 
-export function MonitorExam({ examId }: { examId: string }) {
-  const { studentData, monitorExam } = useWebSocket()
+interface Exam {
+  attendingStudents: Array<{
+    studentID: string;
+    joinedTime: number;
+    submitTime: number;
+    gradings: any[];
+    focusLostTimes: any[];
+    breakRqTimes: any[];
+    finalSubmission: any[];
+  }>;
+}
 
-  useEffect(() => {
-    monitorExam(examId)
-  }, [examId, monitorExam])
-
+export function MonitorExam({ exam }: { exam: Exam }) {
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Student Monitor</h2>
@@ -26,20 +29,20 @@ export function MonitorExam({ examId }: { examId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Object.entries(studentData).map(([studentId, data]) => (
-            <TableRow key={studentId}>
-              <TableCell>{studentId}</TableCell>
-              <TableCell>{new Date(data.joinedTime).toLocaleString()}</TableCell>
-              <TableCell>{data.submitTime ? new Date(data.submitTime).toLocaleString() : 'Not submitted'}</TableCell>
+          {exam.attendingStudents.map((student) => (
+            <TableRow key={student.studentID}>
+              <TableCell>{student.studentID}</TableCell>
+              <TableCell>{new Date(student.joinedTime * 1000).toLocaleString()}</TableCell>
+              <TableCell>{student.submitTime ? new Date(student.submitTime * 1000).toLocaleString() : 'Not submitted'}</TableCell>
               <TableCell>
-                {data.gradings.map((grading, index) => (
+                {student.gradings.length > 0 ? student.gradings.map((grading, index) => (
                   <Badge key={index} className="mr-1">
-                    Q{grading.questionNb}: {grading.passedTestCases}/{grading.passedTestCases + grading.failedTestCases.length}
+                    Q{index + 1}: {grading}
                   </Badge>
-                ))}
+                )) : 'No gradings yet'}
               </TableCell>
-              <TableCell>{data.focusLostTime.length}</TableCell>
-              <TableCell>{data.breakRqTime.length}</TableCell>
+              <TableCell>{student.focusLostTimes.length}</TableCell>
+              <TableCell>{student.breakRqTimes.length}</TableCell>
             </TableRow>
           ))}
         </TableBody>
