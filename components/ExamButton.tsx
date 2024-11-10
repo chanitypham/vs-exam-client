@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { sha256 } from 'js-sha256';
+import { useAuth } from '@clerk/nextjs';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
@@ -32,22 +32,20 @@ export function ExamButton() {
     setExamInfo(prev => ({ ...prev, [name]: value }))
   }
 
+  const { getToken } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const email = 'hoang.vnh@vinuni.edu.vn'; 
-      const randomNumber = Math.floor(Math.random() * 1000000);
-      const authToken = sha256(email + randomNumber);
-
+      const token = await getToken();
       const response = await fetch(`${BASE_URL}/exam`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           uniID: 'vinuni',
-          profEmail: email,
           ...examInfo,
         })
       });

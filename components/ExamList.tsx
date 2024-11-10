@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Button } from "@/components/ui/button"
-import { sha256 } from 'js-sha256';
+import { useAuth } from '@clerk/nextjs';
 
 interface Exam {
   examID: string;
@@ -14,17 +14,15 @@ const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
 export function ExamList({ currentExamId }: { currentExamId?: string }) {
   const [exams, setExams] = useState<Exam[]>([])
+  const { getToken } = useAuth();
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const email = 'hoang.vnh@vinuni.edu.vn'; // This should be dynamically set based on the logged-in user
-        const randomNumber = Math.floor(Math.random() * 1000000);
-        const authToken = sha256(email + randomNumber);
-
-        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030&profEmail=${email}`, {
+        const token = await getToken();
+        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030`, {
           headers: {
-            'Authorization': `Bearer ${authToken}`,
+            'Authorization': `Bearer ${token}`,
           },
         });
         if (!response.ok) throw new Error('Failed to fetch exams');
@@ -36,7 +34,7 @@ export function ExamList({ currentExamId }: { currentExamId?: string }) {
     };
 
     fetchExams();
-  }, []);
+  }, [getToken]);
 
   return (
     <div className="w-[200px] fixed left-0 top-0 h-full bg-gray-100 p-4 overflow-y-auto">

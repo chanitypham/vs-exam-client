@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { sha256 } from 'js-sha256';
+import { useAuth } from '@clerk/nextjs';
 
 interface ExamData {
   [examId: string]: {
@@ -48,13 +48,14 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [examData, setExamData] = useState<ExamData>({});
   const [studentData, setStudentData] = useState<StudentData>({});
   const [isConnected, setIsConnected] = useState(false);
+  const { getToken } = useAuth();
 
   useEffect(() => {
     const ws = new WebSocket('ws://vsexam.cloud.strixthekiet.me/');
     setSocket(ws);
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
+      console.log('websocket connected');
       setIsConnected(true);
     };
 
@@ -66,7 +67,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     ws.onclose = () => {
-      console.log('WebSocket disconnected');
+      console.log('websocket disconnected');
       setIsConnected(false);
     };
 
@@ -75,22 +76,18 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  const monitorExam = useCallback((examId: string) => {
+  const monitorExam = useCallback(async (examId: string) => {
     if (socket && isConnected) {
-      const email = 'hoang.vnh@vinuni.edu.vn'; // This should be dynamically set based on the logged-in user
-      const randomNumber = Math.floor(Math.random() * 1000000);
-      const authToken = sha256(email + randomNumber);
-
+      const token = await getToken();
       socket.send(JSON.stringify({ 
         type: 'monitorExam', 
         examID: examId,
-        profEmail: email,
-        authToken: authToken
+        authToken: token
       }));
     } else {
-      console.error('WebSocket is not connected. Unable to monitor exam.');
+      console.error('websocket is not connected. unable to monitor exam.');
     }
-  }, [socket, isConnected]);
+  }, [socket, isConnected, getToken]);
 
   return (
     <WebSocketContext.Provider value={{ examData, studentData, monitorExam }}>
@@ -102,7 +99,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext);
   if (context === undefined) {
-    throw new Error('useWebSocket must be used within a WebSocketProvider');
+    throw new Error('websocket is not wrapped in WebSocketProvider');
   }
   return context;
 };

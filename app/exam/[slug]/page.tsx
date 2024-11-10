@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { ExamList } from '@/components/ExamList'
 import { ExamDetails } from '@/components/ExamDetails'
 import { MonitorExam } from '@/components/MonitorExam'
-import { sha256 } from 'js-sha256';
+import { useAuth } from '@clerk/nextjs';
 
 interface Exam {
   courseName: string;
@@ -36,19 +36,17 @@ const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 export default function ExamPage({ params }: { params: { slug: string } }) {
   const examId = params.slug
   const [exam, setExam] = useState<Exam | null>(null)
+  const { getToken } = useAuth();
 
   useEffect(() => {
     const fetchExamDetails = async () => {
       try {
-        const email = 'hoang.vnh@vinuni.edu.vn'; // This should be dynamically set based on the logged-in user
-        const randomNumber = Math.floor(Math.random() * 1000000);
-        const authToken = sha256(email + randomNumber);
-
+        const token = await getToken();
         const url = `${BASE_URL}/exam?examID=${examId}`;
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${authToken}`,
+            'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -62,7 +60,7 @@ export default function ExamPage({ params }: { params: { slug: string } }) {
     };
 
     fetchExamDetails();
-  }, [examId]);
+  }, [examId, getToken]);
 
   return (
     <div className="flex">

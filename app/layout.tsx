@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { WebSocketProvider } from '@/components/WebSocketProvider';
+import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,14 +26,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <WebSocketProvider>
-          {children}
-        </WebSocketProvider>
-      </body>
-    </html>
+    <ClerkProvider dynamic>
+      <html lang="en">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <header>
+            <SignedOut>
+              <SignInButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </header>
+          <SignedIn>
+            <WebSocketProvider>
+              <main>{children}</main>
+            </WebSocketProvider>
+          </SignedIn>
+          <SignedOut>
+            <main>Please sign in to access VsExam</main>
+          </SignedOut>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
