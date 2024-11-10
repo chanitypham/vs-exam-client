@@ -4,17 +4,7 @@ import { ExamList } from '../components/ExamList'
 import { ExamTable } from '../components/ExamTable'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs';
-
-interface Exam {
-  courseName: string;
-  examID: string;
-  examName: string;
-  examStartTime: number;
-  duration: number;
-  password: string;
-  testCases: any[];
-  material: { fileName: string; materialContent: string }[];
-}
+import { Exam } from '@/types/types';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 

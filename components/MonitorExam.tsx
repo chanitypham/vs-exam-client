@@ -1,17 +1,6 @@
+import { Exam } from '@/types/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-
-interface Exam {
-  attendingStudents: Array<{
-    studentID: string;
-    joinedTime: number;
-    submitTime: number;
-    gradings: any[];
-    focusLostTimes: any[];
-    breakRqTimes: any[];
-    finalSubmission: any[];
-  }>;
-}
 
 export function MonitorExam({ exam }: { exam: Exam }) {
   return (
@@ -37,12 +26,12 @@ export function MonitorExam({ exam }: { exam: Exam }) {
               <TableCell>
                 {student.gradings.length > 0 ? student.gradings.map((grading, index) => (
                   <Badge key={index} className="mr-1">
-                    Q{index + 1}: {grading}
+                    Q{index + 1}: {grading.passedTestCases}/{grading.passedTestCases + grading.failedTestCases.length}
                   </Badge>
                 )) : 'No gradings yet'}
               </TableCell>
-              <TableCell>{student.focusLostTimes.length}</TableCell>
-              <TableCell>{student.breakRqTimes.length}</TableCell>
+              <TableCell>{student.focusLostTime.length}</TableCell>
+              <TableCell>{student.breakRqTime.length}</TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -73,7 +73,7 @@ export function ExamButton() {
         <DialogHeader>
           <DialogTitle>Add New Exam</DialogTitle>
           <DialogDescription>
-            Fill in the exam details. Click save when you're done.
+            Fill in the exam details. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

@@ -1,15 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import Link from 'next/link'
+import { Exam } from '@/types/types';
 
-interface Exam {
-  courseName: string;
-  examID: string;
-  examName: string;
-  examStartTime: number;
-  duration: number;
-  password: string;
-}
 
 export function ExamTable({ exams }: { exams: Exam[] }) {
   return (

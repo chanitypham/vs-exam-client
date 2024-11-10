@@ -4,32 +4,7 @@ import { ExamList } from '@/components/ExamList'
 import { ExamDetails } from '@/components/ExamDetails'
 import { MonitorExam } from '@/components/MonitorExam'
 import { useAuth } from '@clerk/nextjs';
-
-interface Exam {
-  courseName: string;
-  examID: string;
-  examName: string;
-  examStartTime: number;
-  duration: number;
-  password: string;
-  testCases: Array<Array<{ input: string; output: string }>>;
-  material: { fileName: string; materialContent: string }[];
-  attendingStudents: Array<{
-    studentID: string;
-    joinedTime: number;
-    submitTime: number;
-    gradings: any[];
-    focusLostTimes: any[];
-    breakRqTimes: any[];
-    finalSubmission: any[];
-  }>;
-  profName: string;
-  courseID: string;
-  uniID: string;
-  profEmail: string;
-  materials: string[]; 
-}
-
+import { Exam } from '@/types/types';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 

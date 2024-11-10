@@ -1,18 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-
-interface Exam {
-  profName: string;
-  courseID: string;
-  examName: string;
-  examID: string;
-  uniID: string;
-  profEmail: string;
-  examStartTime: number;
-  duration: number;
-  password: string;
-  testCases: Array<Array<{ input: string; output: string }>>;
-  materials: string[];
-}
+import { Exam } from '@/types/types';
 
 export function ExamDetails({ exam }: { exam: Exam }) {
   return (

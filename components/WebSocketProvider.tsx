@@ -1,45 +1,7 @@
 'use client'
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
-
-interface ExamData {
-  [examId: string]: {
-    courseName: string;
-    examID: string;
-    examName: string;
-    examStartTime: number;
-    duration: number;
-    password: string;
-    testCases: any[];
-    material: { fileName: string; materialContent: string }[];
-  };
-}
-
-interface StudentData {
-  [studentId: string]: {
-    joinedTime: number;
-    submitTime: number;
-    gradings: {
-      time: number;
-      questionNb: number;
-      passedTestCases: number;
-      failedTestCases: {
-        testCaseIndex: number;
-        expectedOutput: string;
-        studentOutput: string;
-      }[];
-    }[];
-    focusLostTime: number[];
-    breakRqTime: { breakRqTime: number; reason: string }[];
-    finalSubmission: string[];
-  };
-}
-
-interface WebSocketContextType {
-  examData: ExamData;
-  studentData: StudentData;
-  monitorExam: (examId: string) => void;
-}
+import { ExamData, StudentData, WebSocketContextType } from '@/types/types';
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
 
@@ -55,19 +17,21 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSocket(ws);
 
     ws.onopen = () => {
-      console.log('websocket connected');
+      console.log('WebSocket connected');
       setIsConnected(true);
     };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'studentUpdate') {
+      if (data.type === 'examUpdate') {
+        setExamData((prev) => ({ ...prev, [data.examID]: data }));
+      } else if (data.type === 'studentUpdate') {
         setStudentData((prev) => ({ ...prev, [data.studentId]: data }));
       }
     };
 
     ws.onclose = () => {
-      console.log('websocket disconnected');
+      console.log('WebSocket disconnected');
       setIsConnected(false);
     };
 
@@ -82,15 +46,28 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       socket.send(JSON.stringify({ 
         type: 'monitorExam', 
         examID: examId,
+        profEmail: 'hoang.vnh@vinuni.edu.vn',
         authToken: token
       }));
     } else {
-      console.error('websocket is not connected. unable to monitor exam.');
+      console.error('WebSocket is not connected. Unable to monitor exam.');
     }
   }, [socket, isConnected, getToken]);
 
+  const handleBreakRequest = useCallback((studentId: string, accept: boolean) => {
+    if (socket && isConnected) {
+      socket.send(JSON.stringify({
+        type: 'breakResponse',
+        studentID: studentId,
+        acceptRq: accept
+      }));
+    } else {
+      console.error('WebSocket is not connected. Unable to handle break request.');
+    }
+  }, [socket, isConnected]);
+
   return (
-    <WebSocketContext.Provider value={{ examData, studentData, monitorExam }}>
+    <WebSocketContext.Provider value={{ examData, studentData, monitorExam, handleBreakRequest }}>
       {children}
     </WebSocketContext.Provider>
   );
@@ -99,7 +76,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext);
   if (context === undefined) {
-    throw new Error('websocket is not wrapped in WebSocketProvider');
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
   }
   return context;
 };

@@ -4,11 +4,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@clerk/nextjs';
-
-interface Exam {
-  examID: string;
-  examName: string;
-}
+import { Exam } from '@/types/types';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
