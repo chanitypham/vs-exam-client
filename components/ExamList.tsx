@@ -16,7 +16,8 @@ export function ExamList({ currentExamId }: { currentExamId?: string }) {
     const fetchExams = async () => {
       try {
         const token = await getToken();
-        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030`, {
+        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030&profEmail=hoang.vnh@vinuni.edu.vn`, {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
           },
