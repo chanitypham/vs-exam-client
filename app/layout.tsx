@@ -35,7 +35,6 @@ export default function RootLayout({
               <div className="container mx-auto flex justify-between items-center">
                 <Link href="/" className="text-xl font-bold">VsExam</Link>
                 <div className="flex items-center space-x-4">
-                  <Link href="/exams" className="hover:text-gray-300">Exams</Link>
                   <UserButton afterSignOutUrl="/" />
                 </div>
               </div>

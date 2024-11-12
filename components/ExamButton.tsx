@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 
@@ -33,21 +33,20 @@ export function ExamButton() {
   }
 
   const { getToken } = useAuth();
+  const { user } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       const token = await getToken();
-      const response = await fetch(`${BASE_URL}/exam`, {
+      const profEmail = user?.primaryEmailAddress?.emailAddress;
+      const response = await fetch(`${BASE_URL}/exam?uniID=vinuni&courseID=${examInfo.courseID}&profEmail=${profEmail}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          uniID: 'vinuni',
-          ...examInfo,
-        })
+        body: JSON.stringify(examInfo)
       });
       if (!response.ok) throw new Error('Failed to create exam');
       setIsOpen(false)
@@ -73,7 +72,7 @@ export function ExamButton() {
         <DialogHeader>
           <DialogTitle>Add New Exam</DialogTitle>
           <DialogDescription>
-            Fill in the exam details. Click save when you&apos;re done.
+            Fill in the exam details. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

@@ -6,8 +6,7 @@ export function ExamDetails({ exam }: { exam: Exam }) {
     <div className="space-y-4">
       <div>
         <h2 className="text-2xl font-semibold">{exam.examName}</h2>
-        <p className="text-gray-600">Course: {exam.courseID}</p>
-        <p className="text-gray-600">Professor: {exam.profName}</p>
+        <p className="text-gray-600">Course: {exam.courseName}</p>
       </div>
       <div className="flex space-x-4">
         <Badge>Start: {new Date(exam.examStartTime * 1000).toLocaleString()}</Badge>
@@ -16,8 +15,8 @@ export function ExamDetails({ exam }: { exam: Exam }) {
       <div>
         <h3 className="text-xl font-semibold">Materials</h3>
         <ul className="list-disc list-inside">
-          {exam.materials.map((item, index) => (
-            <li key={index}>{item}</li>
+          {exam.material.map((item, index) => (
+            <li key={index}>{item.fileName}</li>
           ))}
         </ul>
       </div>

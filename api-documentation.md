@@ -538,7 +538,7 @@ paths:
           description: Student is not authorized (e.g., missing credentials, not in exam)
         '404':
           description: Exam not found
-  /monitor/{examID}:
+  /monitor/{clientID}/{examID}:
     get:
       tags:
         - teacher
@@ -554,6 +554,18 @@ paths:
             type: string
             format: given by professor
             example: vinuni-COMP2030-midterm-1
+        - in: path
+          name: clientID
+          required: true
+          schema:
+            type: string
+            format: profEmail + timejoinUnix
+            example: hoang.vnh@vinuni.edu.vn1731317650288
+        - in: query
+          name: studentID
+          required: false
+          schema:
+            type: string
 
       responses:
         '200':

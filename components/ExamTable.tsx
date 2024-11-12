@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge"
 import Link from 'next/link'
 import { Exam } from '@/types/types';
 
-
 export function ExamTable({ exams }: { exams: Exam[] }) {
   return (
     <Table>
@@ -25,12 +24,12 @@ export function ExamTable({ exams }: { exams: Exam[] }) {
               </Link>
             </TableCell>
             <TableCell>{exam.courseName}</TableCell>
-            <TableCell>{new Date(exam.examStartTime).toLocaleString()}</TableCell>
+            <TableCell>{new Date(exam.examStartTime * 1000).toLocaleString()}</TableCell>
             <TableCell>{exam.duration} minutes</TableCell>
             <TableCell>
               <Badge>
-                {new Date(exam.examStartTime) > new Date() ? 'Upcoming' : 
-                 new Date(exam.examStartTime).getTime() + exam.duration * 60000 > Date.now() ? 'In Progress' : 'Finished'}
+                {new Date(exam.examStartTime * 1000) > new Date() ? 'Upcoming' : 
+                 new Date(exam.examStartTime * 1000).getTime() + exam.duration * 60000 > Date.now() ? 'In Progress' : 'Finished'}
               </Badge>
             </TableCell>
           </TableRow>

@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { ExamData, StudentData, WebSocketContextType } from '@/types/types';
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -11,9 +11,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [studentData, setStudentData] = useState<StudentData>({});
   const [isConnected, setIsConnected] = useState(false);
   const { getToken } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
-    const ws = new WebSocket('ws://vsexam.cloud.strixthekiet.me/');
+    const ws = new WebSocket('wss://vsexam.cloud.strixthekiet.me/');
     setSocket(ws);
 
     ws.onopen = () => {
@@ -43,16 +44,18 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const monitorExam = useCallback(async (examId: string) => {
     if (socket && isConnected) {
       const token = await getToken();
+      const profEmail = user?.primaryEmailAddress?.emailAddress;
+      const clientID = `${profEmail}${Date.now()}`;
       socket.send(JSON.stringify({ 
         type: 'monitorExam', 
         examID: examId,
-        profEmail: 'hoang.vnh@vinuni.edu.vn', 
+        clientID: clientID,
         authToken: token
       }));
     } else {
       console.error('WebSocket is not connected. Unable to monitor exam.');
     }
-  }, [socket, isConnected, getToken]);
+  }, [socket, isConnected, getToken, user]);
 
   const handleBreakRequest = useCallback((studentId: string, accept: boolean) => {
     if (socket && isConnected) {

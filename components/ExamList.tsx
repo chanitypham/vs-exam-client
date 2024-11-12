@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Button } from "@/components/ui/button"
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { Exam } from '@/types/types';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
@@ -11,11 +11,13 @@ const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 export function ExamList({ currentExamId }: { currentExamId?: string }) {
   const [exams, setExams] = useState<Exam[]>([])
   const { getToken } = useAuth();
+  const { user } = useUser();
 
   const fetchExams = useCallback(async () => {
     try {
       const token = await getToken();
-      const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030`, {
+      const profEmail = user?.primaryEmailAddress?.emailAddress;
+      const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030&profEmail=${profEmail}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -27,7 +29,7 @@ export function ExamList({ currentExamId }: { currentExamId?: string }) {
     } catch (error) {
       console.error('Error fetching exams:', error);
     }
-  }, [getToken]);
+  }, [getToken, user]);
 
   useEffect(() => {
     fetchExams();

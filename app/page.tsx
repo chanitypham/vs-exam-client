@@ -3,7 +3,7 @@ import { ExamButton } from '../components/ExamButton'
 import { ExamList } from '../components/ExamList'
 import { ExamTable } from '../components/ExamTable'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { Exam } from '@/types/types';
 
 const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
@@ -11,12 +11,14 @@ const BASE_URL = 'https://vsexam.cloud.strixthekiet.me';
 export default function Home() {
   const [exams, setExams] = useState<Exam[]>([]);
   const { getToken } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
         const token = await getToken();
-        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030`, {
+        const profEmail = user?.primaryEmailAddress?.emailAddress;
+        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030&profEmail=${profEmail}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -30,7 +32,7 @@ export default function Home() {
     };
 
     fetchExams();
-  }, [getToken]);
+  }, [getToken, user]);
 
   return (
     <div className="flex">

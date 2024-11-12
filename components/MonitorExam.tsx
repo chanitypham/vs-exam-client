@@ -18,7 +18,7 @@ export function MonitorExam({ exam }: { exam: Exam }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {exam.attendingStudents.map((student) => (
+          {exam.attendingStudents && exam.attendingStudents.map((student) => (
             <TableRow key={student.studentID}>
               <TableCell>{student.studentID}</TableCell>
               <TableCell>{new Date(student.joinedTime * 1000).toLocaleString()}</TableCell>
@@ -26,7 +26,7 @@ export function MonitorExam({ exam }: { exam: Exam }) {
               <TableCell>
                 {student.gradings.length > 0 ? student.gradings.map((grading, index) => (
                   <Badge key={index} className="mr-1">
-                    Q{index + 1}: {grading.passedTestCases}/{grading.passedTestCases + grading.failedTestCases.length}
+                    Q{grading.questionNb}: {grading.passedTestCases}/{grading.passedTestCases + grading.failedTestCases.length}
                   </Badge>
                 )) : 'No gradings yet'}
               </TableCell>
@@ -39,3 +39,4 @@ export function MonitorExam({ exam }: { exam: Exam }) {
     </div>
   )
 }
+
