@@ -538,7 +538,7 @@ paths:
           description: Student is not authorized (e.g., missing credentials, not in exam)
         '404':
           description: Exam not found
-  /monitor:
+  /monitor/{examID}:
     get:
       tags:
         - teacher
@@ -547,31 +547,14 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: query
+        - in: path
           name: examID
           required: true
           schema:
             type: string
             format: given by professor
             example: vinuni-COMP2030-midterm-1
-        - in: query
-          name: profEmail
-          required: true
-          schema:
-            type: string
-            format: email
-            example: hoang.vnh@vinuni.edu.vn
-        - in: query
-          name: studentID
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: acceptRq
-          required: false
-          schema:
-            type: boolean
-          example: true
+
       responses:
         '200':
           description: WebSocket connection established, a stream of student data will be sent when student has an update. Only some updated information will be sent

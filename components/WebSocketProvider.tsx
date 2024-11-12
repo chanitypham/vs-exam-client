@@ -46,7 +46,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       socket.send(JSON.stringify({ 
         type: 'monitorExam', 
         examID: examId,
-        profEmail: 'hoang.vnh@vinuni.edu.vn',
+        profEmail: 'hoang.vnh@vinuni.edu.vn', 
         authToken: token
       }));
     } else {

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Button } from "@/components/ui/button"
@@ -12,26 +12,26 @@ export function ExamList({ currentExamId }: { currentExamId?: string }) {
   const [exams, setExams] = useState<Exam[]>([])
   const { getToken } = useAuth();
 
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const token = await getToken();
-        const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030&profEmail=hoang.vnh@vinuni.edu.vn`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) throw new Error('Failed to fetch exams');
-        const data = await response.json();
-        setExams(data);
-      } catch (error) {
-        console.error('Error fetching exams:', error);
-      }
-    };
-
-    fetchExams();
+  const fetchExams = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${BASE_URL}/exams?uniID=vinuni&courseID=COMP2030`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch exams');
+      const data = await response.json();
+      setExams(data);
+    } catch (error) {
+      console.error('Error fetching exams:', error);
+    }
   }, [getToken]);
+
+  useEffect(() => {
+    fetchExams();
+  }, [fetchExams]);
 
   return (
     <div className="w-[200px] fixed left-0 top-0 h-full bg-gray-100 p-4 overflow-y-auto">
